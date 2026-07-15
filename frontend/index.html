@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ShieldRide — Driver Protection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">SHIELD<span>RIDE</span></div>
+    <div class="status-dot"></div>
+    <div class="topbar-info">Protection <strong>ACTIVE</strong></div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-info">Driver: <strong id="driver-name">—</strong> &nbsp;·&nbsp; Shift: <strong id="shift-timer">0.0h</strong></div>
+    <div class="topbar-right">
+      <div class="alert-badge" id="alert-badge">LOADING...</div>
+      <button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="API.logout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <div class="driver-card">
+          <div class="driver-name" id="driver-name2">Loading...</div>
+          <div class="driver-meta" id="driver-id">—</div>
+          <div class="driver-meta" id="driver-city">—</div>
+          <div class="driver-score-row">
+            <div class="driver-score-num" id="driver-score">—</div>
+            <div class="driver-score-label">/ 100 Safety</div>
+          </div>
+          <div class="score-track"><div class="score-fill" id="score-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group-label">OVERVIEW</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
+        <div class="nav-item" onclick="showPage('alerts',this)"><span class="nav-icon">🚨</span>Active Alerts</div>
+
+        <div class="nav-group-label">SAFETY</div>
+        <div class="nav-item" onclick="showPage('logtrip',this)"><span class="nav-icon">📋</span>Log Trip</div>
+        <div class="nav-item" onclick="showPage('passengers',this)"><span class="nav-icon">👤</span>Passenger Risk</div>
+        <div class="nav-item" onclick="showPage('incidents',this)"><span class="nav-icon">🛡</span>Incident Log</div>
+
+        <div class="nav-group-label">EARNINGS</div>
+        <div class="nav-item" onclick="showPage('earnings',this)"><span class="nav-icon">💰</span>Pay Monitor</div>
+        <div class="nav-item" onclick="showPage('algorithm',this)"><span class="nav-icon">🤖</span>Algorithm Watch</div>
+
+        <div class="nav-group-label">RESOURCES</div>
+        <div class="nav-item" onclick="showPage('rights',this)"><span class="nav-icon">⚖️</span>Know Your Rights</div>
+        <div class="nav-item" onclick="showPage('community',this)"><span class="nav-icon">🌐</span>Community Reports</div>
+      </nav>
+
+      <div class="sidebar-sos">
+        <div class="sos-label">EMERGENCY</div>
+        <div class="sos-sub">In immediate danger?</div>
+        <button class="btn btn-danger" style="width:100%" onclick="triggerEmergency()">🆘 SOS ALERT</button>
+      </div>
+    </div>
+
+    <!-- CENTER PAGES -->
+    <div class="center">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div class="page-title">DASHBOARD</div>
+          <div class="page-badge badge-warn" id="alert-badge2">LOADING...</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-accent green"></div><div class="stat-label">Trips Today</div><div class="stat-value green" id="stat-trips">—</div><div class="stat-sub">This shift</div><div class="sparkline" id="sp1"></div></div>
+          <div class="stat-card"><div class="stat-accent amber"></div><div class="stat-label">Earnings Today</div><div class="stat-value amber" id="stat-earnings">—</div><div class="stat-sub" id="stat-earnings-sub">Loading...</div><div class="sparkline" id="sp2"></div></div>
+          <div class="stat-card"><div class="stat-accent red"></div><div class="stat-label">Incidents Prevented</div><div class="stat-value red" id="stat-prevented">—</div><div class="stat-sub">This week</div><div class="sparkline" id="sp3"></div></div>
+          <div class="stat-card"><div class="stat-accent blue"></div><div class="stat-label">Hours Active</div><div class="stat-value blue" id="stat-hours">—</div><div class="stat-sub">Current shift</div><div class="sparkline" id="sp4"></div></div>
+        </div>
+        <div class="section-label">ACTIVE ALERTS</div>
+        <div id="dash-alerts"><div class="loading-msg">Loading alerts...</div></div>
+        <div class="section-label" style="margin-top:20px">RECENT TRIPS</div>
+        <table class="data-table">
+          <thead><tr><th>Time</th><th>Route</th><th>Fare</th><th>Risk</th><th>Status</th></tr></thead>
+          <tbody id="trips-tbody"><tr><td colspan="5" class="loading-msg">Loading trips...</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="page" id="page-alerts">
+        <div class="page-header"><div class="page-title">ACTIVE ALERTS</div><div class="page-badge badge-red">LIVE</div></div>
+        <div id="alerts-container"><div class="loading-msg">Loading...</div></div>
+      </div>
+
+      <!-- LOG TRIP -->
+      <div class="page" id="page-logtrip">
+        <div class="page-header"><div class="page-title">LOG TRIP</div><div class="page-badge badge-blue">AI RISK ANALYSIS</div></div>
+        <div class="ai-box"><div class="ai-text">Each trip is analyzed by Claude AI. Rider IDs are cross-referenced against the community database for real-time risk scoring.</div></div>
+        <div class="tabs" style="margin-top:16px">
+          <div class="tab active" onclick="switchTab(this,'tab-trip')">TRIP DETAILS</div>
+          <div class="tab" onclick="switchTab(this,'tab-safety')">SAFETY REPORT</div>
+          <div class="tab" onclick="switchTab(this,'tab-pay')">PAY ISSUE</div>
+        </div>
+
+        <!-- Tab: Trip Details -->
+        <div class="tab-content active" id="tab-trip">
+          <div class="form-grid">
+            <div class="form-group"><div class="form-label">Rider Account ID</div><input class="form-input" type="text" id="trip-rider-id" placeholder="#39241"/></div>
+            <div class="form-group"><div class="form-label">Platform</div><select class="form-select" id="trip-platform"><option>Uber</option><option>Lyft</option><option>Other</option></select></div>
+            <div class="form-group"><div class="form-label">Pickup</div><input class="form-input" type="text" id="trip-pickup" placeholder="Wicker Park"/></div>
+            <div class="form-group"><div class="form-label">Dropoff</div><input class="form-input" type="text" id="trip-dropoff" placeholder="River North"/></div>
+            <div class="form-group"><div class="form-label">Fare ($)</div><input class="form-input" type="number" step="0.01" id="trip-fare" placeholder="18.40"/></div>
+            <div class="form-group"><div class="form-label">Tip ($)</div><input class="form-input" type="number" step="0.01" id="trip-tip" placeholder="3.00"/></div>
+            <div class="form-group"><div class="form-label">Duration (min)</div><input class="form-input" type="number" id="trip-duration" placeholder="22"/></div>
+            <div class="form-group"><div class="form-label">Start Time</div><input class="form-input" type="datetime-local" id="trip-start"/></div>
+            <div class="form-group full"><div class="form-label">Notes</div><textarea class="form-textarea" id="trip-notes" placeholder="Any observations about the rider or trip..."></textarea></div>
+          </div>
+          <div style="margin-top:16px"><button class="btn btn-primary" id="btn-log-trip" onclick="logTrip()">LOG TRIP + AI ANALYSIS</button></div>
+        </div>
+
+        <!-- Tab: Safety Report -->
+        <div class="tab-content" id="tab-safety">
+          <div class="form-grid">
+            <div class="form-group"><div class="form-label">Incident Type</div>
+              <select class="form-select" id="inc-type">
+                <option value="verbal_harassment">Verbal harassment</option>
+                <option value="physical_threat">Physical threat</option>
+                <option value="physical_assault">Physical assault</option>
+                <option value="property_damage">Property damage</option>
+                <option value="suspicious_behavior">Suspicious behavior</option>
+                <option value="wage_theft">Wage theft</option>
+                <option value="wrongful_deactivation">Wrongful deactivation</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group"><div class="form-label">Severity</div>
+              <select class="form-select" id="inc-severity">
+                <option value="low">Low — uncomfortable</option>
+                <option value="medium">Medium — threatening</option>
+                <option value="high">High — dangerous</option>
+                <option value="critical">Critical — police involved</option>
+              </select>
+            </div>
+            <div class="form-group"><div class="form-label">Rider ID (optional)</div><input class="form-input" type="text" id="inc-rider" placeholder="#39241"/></div>
+            <div class="form-group"><div class="form-label">Police Notified</div>
+              <select class="form-select" id="inc-police"><option value="no">No</option><option value="yes">Yes</option></select>
+            </div>
+            <div class="form-group"><div class="form-label">Platform Response</div>
+              <select class="form-select" id="inc-platform-resp">
+                <option value="none">Not yet reported</option>
+                <option value="no_action">Reported — no action</option>
+                <option value="resolved">Reported — resolved</option>
+                <option value="retaliated">They deactivated me</option>
+              </select>
+            </div>
+            <div class="form-group full"><div class="form-label">What happened</div><textarea class="form-textarea" id="inc-desc" placeholder="Describe the incident in detail. The more context, the better the AI guidance..."></textarea></div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:8px">
+            <button class="btn btn-danger" id="btn-report-safety" onclick="reportSafety()">SUBMIT + GET AI GUIDANCE</button>
+          </div>
+          <div id="incident-result"></div>
+        </div>
+
+        <!-- Tab: Pay Issue -->
+        <div class="tab-content" id="tab-pay">
+          <div class="form-grid">
+            <div class="form-group"><div class="form-label">Platform</div><select class="form-select" id="pay-platform"><option>Uber</option><option>Lyft</option></select></div>
+            <div class="form-group"><div class="form-label">Today's Earnings ($)</div><input class="form-input" type="number" step="0.01" id="pay-earnings" placeholder="147.00"/></div>
+            <div class="form-group"><div class="form-label">Per-Mile Rate ($)</div><input class="form-input" type="number" step="0.01" id="pay-rate" placeholder="0.71"/></div>
+            <div class="form-group"><div class="form-label">Total Trips</div><input class="form-input" type="number" id="pay-trips" placeholder="14"/></div>
+            <div class="form-group"><div class="form-label">Hours Worked</div><input class="form-input" type="number" step="0.1" id="pay-hours" placeholder="4.4"/></div>
+          </div>
+          <div style="margin-top:16px"><button class="btn btn-primary" id="btn-report-pay" onclick="reportPay()">ANALYZE WITH AI</button></div>
+        </div>
+      </div>
+
+      <!-- PASSENGER RISK -->
+      <div class="page" id="page-passengers">
+        <div class="page-header"><div class="page-title">PASSENGER RISK CHECK</div><div class="page-badge badge-red">CLAUDE AI POWERED</div></div>
+
+        <!-- How Claude scores passengers -->
+        <div class="ai-box" style="margin-bottom:16px">
+          <div class="ai-text">
+            Claude AI scores each passenger <strong style="color:var(--text)">0–100</strong> using 5 weighted signals:<br><br>
+            <span style="color:var(--accent2)">⬛ Account Age (30%)</span> — accounts under 7 days are the #1 fraud signal. Most banned riders create new accounts.<br>
+            <span style="color:var(--accent2)">⬛ Community Reports (30%)</span> — other drivers who flagged this rider ID. Type matters: "refused_payment" &gt; "rude".<br>
+            <span style="color:var(--accent2)">⬛ Payment Flags + Chargebacks (25%)</span> — a chargeback = real fraud. Even 1 is a strong red flag.<br>
+            <span style="color:var(--accent2)">⬛ Payment Type (10%)</span> — prepaid/Cash App = harder to trace = higher risk. Credit = lowest risk.<br>
+            <span style="color:var(--accent2)">⬛ Context: Time + Location (5%)</span> — late night pickups in unfamiliar areas elevate the score.
+          </div>
+        </div>
+
+        <!-- Quick test presets -->
+        <div class="section-label">QUICK TEST — LOAD A PRESET</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="btn btn-outline btn-sm" onclick="pLoad('high')">⚠ High Risk Profile</button>
+          <button class="btn btn-outline btn-sm" onclick="pLoad('medium')">◎ Medium Risk</button>
+          <button class="btn btn-outline btn-sm" onclick="pLoad('low')">✓ Safe Passenger</button>
+          <button class="btn btn-outline btn-sm" onclick="pLoad('new')">? New Account</button>
+        </div>
+
+        <!-- All 5 signal fields -->
+        <div class="section-label">PASSENGER DATA — ENTER BEFORE ACCEPTING RIDE</div>
+        <div class="form-grid">
+          <!-- Signal: Account Age -->
+          <div class="form-group">
+            <div class="form-label">Rider Account ID <span style="color:var(--text3)">(from app)</span></div>
+            <input class="form-input" type="text" id="p-rider-id" placeholder="#39241"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Account Age (days) <span style="color:var(--accent2)">★ 30% weight</span></div>
+            <input class="form-input" type="number" id="p-age" placeholder="e.g. 3 = very new = HIGH RISK" min="0"/>
+          </div>
+
+          <!-- Signal: Payment -->
+          <div class="form-group">
+            <div class="form-label">Payment Type <span style="color:var(--accent2)">★ 10% weight</span></div>
+            <select class="form-select" id="p-payment">
+              <option value="unknown">Unknown</option>
+              <option value="credit">Credit card (lowest risk)</option>
+              <option value="paypal">PayPal (medium risk)</option>
+              <option value="prepaid">Prepaid card (high risk)</option>
+              <option value="cash_app">Cash App (high risk)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Payment Flags <span style="color:var(--accent2)">★ 25% weight</span></div>
+            <input class="form-input" type="number" id="p-flags" placeholder="# of payment anomalies" min="0"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Chargebacks (disputed charges) <span style="color:var(--accent2)">★ 25% weight</span></div>
+            <input class="form-input" type="number" id="p-chargebacks" placeholder="Even 1 = strong fraud signal" min="0"/>
+          </div>
+
+          <!-- Signal: Community Reports -->
+          <div class="form-group">
+            <div class="form-label">Community Driver Reports <span style="color:var(--accent2)">★ 30% weight</span></div>
+            <input class="form-input" type="number" id="p-reports" placeholder="# of reports from other drivers" min="0"/>
+          </div>
+          <div class="form-group full">
+            <div class="form-label">Report Types <span style="color:var(--text3)">(comma-separated)</span></div>
+            <input class="form-input" id="p-report-types" placeholder="e.g. aggressive, refused_payment, suspicious, threatening"/>
+          </div>
+
+          <!-- Signal: Context -->
+          <div class="form-group">
+            <div class="form-label">Pickup Location <span style="color:var(--text3)">(context)</span></div>
+            <input class="form-input" id="p-pickup" placeholder="e.g. Loop, Chicago"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Time of Day <span style="color:var(--text3)">(context)</span></div>
+            <select class="form-select" id="p-time">
+              <option value="daytime">Daytime (6am–8pm)</option>
+              <option value="evening">Evening (8pm–midnight)</option>
+              <option value="late_night">Late night (midnight–6am)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="btn btn-primary" id="btn-check" onclick="checkPassenger()" style="padding:10px 24px">
+            🤖 ANALYZE WITH CLAUDE AI
+          </button>
+          <span style="font-size:11px;color:var(--text3)">Claude reads all 5 signals → gives a 0–100 score + reasoning</span>
+        </div>
+
+        <div id="p-error" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:4px;font-size:12px;color:var(--accent2)"></div>
+        <div id="passenger-result"></div>
+      </div>
+
+      <!-- INCIDENTS -->
+      <div class="page" id="page-incidents">
+        <div class="page-header"><div class="page-title">INCIDENT LOG</div><div class="page-badge badge-green">PROTECTED</div></div>
+        <div class="counters-grid">
+          <div class="counter"><div class="counter-icon">🛡</div><div class="counter-num green" id="inc-prevented">—</div><div class="counter-label">Prevented</div></div>
+          <div class="counter"><div class="counter-icon">✅</div><div class="counter-num amber" id="inc-resolved">—</div><div class="counter-label">Resolved</div></div>
+          <div class="counter"><div class="counter-icon">📋</div><div class="counter-num blue" id="inc-filed">—</div><div class="counter-label">Filed</div></div>
+          <div class="counter"><div class="counter-icon">⏳</div><div class="counter-num muted" id="inc-pending">—</div><div class="counter-label">Pending</div></div>
+        </div>
+        <table class="data-table" style="margin-top:16px">
+          <thead><tr><th>Date</th><th>Type</th><th>AI Action</th><th>Status</th></tr></thead>
+          <tbody id="inc-tbody"><tr><td colspan="4" class="loading-msg">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- EARNINGS -->
+      <div class="page" id="page-earnings">
+        <div class="page-header"><div class="page-title">PAY MONITOR</div><div class="page-badge badge-red">AI ANOMALY DETECTION</div></div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value red" id="earn-week">—</div></div>
+          <div class="stat-card"><div class="stat-label">30-Day Total</div><div class="stat-value green" id="earn-month">—</div></div>
+          <div class="stat-card"><div class="stat-label">Per-Mile Rate</div><div class="stat-value amber" id="earn-rate">—</div></div>
+        </div>
+        <div id="earn-anomalies" style="margin-top:16px"><div class="loading-msg">Analyzing...</div></div>
+        <div class="panel-box" style="margin-top:16px">
+          <div class="section-label">7-DAY EARNINGS TREND</div>
+          <div id="earnings-chart" style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:10px"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn btn-primary" onclick="fileComplaint()">FILE PLATFORM COMPLAINT</button>
+          <button class="btn btn-outline" onclick="joinCollective()">JOIN COLLECTIVE ACTION</button>
+        </div>
+      </div>
+
+      <!-- ALGORITHM WATCH -->
+      <div class="page" id="page-algorithm">
+        <div class="page-header"><div class="page-title">ALGORITHM WATCH</div><div class="page-badge badge-warn">LIVE MONITORING</div></div>
+        <div id="algo-result"><div class="loading-msg">Loading AI analysis...</div></div>
+      </div>
+
+      <!-- KNOW YOUR RIGHTS -->
+      <div class="page" id="page-rights">
+        <div class="page-header"><div class="page-title">KNOW YOUR RIGHTS</div><div class="page-badge badge-blue">LEGAL RESOURCES</div></div>
+        <div class="rights-grid">
+          <div class="alert-card info"><div class="alert-header"><div class="alert-icon">⚖️</div><div class="alert-title">RIGHT TO CANCEL UNSAFE RIDES</div></div><div class="alert-body">Platform policy allows cancellation for safety reasons without acceptance rate penalty. ShieldRide documents all safety cancellations to protect your account from retaliation.</div><div class="alert-actions"><button class="btn btn-outline btn-sm" onclick="window.open('https://help.uber.com','_blank')">UBER POLICY</button><button class="btn btn-outline btn-sm" onclick="window.open('https://help.lyft.com','_blank')">LYFT POLICY</button></div></div>
+          <div class="alert-card info"><div class="alert-header"><div class="alert-icon">💼</div><div class="alert-title">RIGHT TO FAIR PAY & RATE TRANSPARENCY</div></div><div class="alert-body">Many cities require platforms to disclose rate changes in advance. Chicago Ordinance §14-12 requires 14-day notice before rate cuts. File a complaint with your city labor department if rates are reduced without notice.</div><div class="alert-actions"><button class="btn btn-outline btn-sm" onclick="window.open('https://www.chicago.gov','_blank')">CHICAGO LABOR DEPT</button></div></div>
+          <div class="alert-card info"><div class="alert-header"><div class="alert-icon">🛡</div><div class="alert-title">PROTECTION FROM WRONGFUL DEACTIVATION</div></div><div class="alert-body">Platforms must offer an appeal process before permanent deactivation. Keep records of every incident report against you. ShieldRide tracks deactivation patterns and can provide documentation for appeals.</div><div class="alert-actions"><button class="btn btn-outline btn-sm" onclick="window.open('https://www.ridesharedriversunited.com','_blank')">DRIVERS UNITED</button></div></div>
+          <div class="alert-card info"><div class="alert-header"><div class="alert-icon">📞</div><div class="alert-title">EMERGENCY & SUPPORT CONTACTS</div></div><div class="alert-body"><strong style="color:var(--text)">Emergency:</strong> 911 &nbsp;·&nbsp; <strong style="color:var(--text)">Rideshare Drivers United:</strong> 1-800-GIG-WORK &nbsp;·&nbsp; <strong style="color:var(--text)">NLRB:</strong> 1-844-762-6572</div></div>
+        </div>
+      </div>
+
+      <!-- COMMUNITY -->
+      <div class="page" id="page-community">
+        <div class="page-header"><div class="page-title">COMMUNITY REPORTS</div><div class="page-badge badge-blue">YOUR CITY</div></div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat-card"><div class="stat-label">Active Drivers</div><div class="stat-value blue" id="community-drivers">—</div></div>
+          <div class="stat-card"><div class="stat-label">Reports This Week</div><div class="stat-value amber">—</div></div>
+          <div class="stat-card"><div class="stat-label">Incidents Prevented</div><div class="stat-value green">—</div></div>
+        </div>
+        <div class="ai-box" style="margin-top:16px"><div class="ai-text" id="community-alert">Loading community intelligence...</div></div>
+        <div class="section-label">AREA HOTSPOTS</div>
+        <table class="data-table">
+          <thead><tr><th>Area</th><th>Type</th><th>Reports</th><th>Risk</th></tr></thead>
+          <tbody id="community-tbody"><tr><td colspan="4" class="loading-msg">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+    </div><!-- /center -->
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="rp-section">
+        <div class="rp-title">📍 Live Location</div>
+        <div class="map-box">
+          <svg style="position:absolute;inset:0;opacity:.12" viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg">
+            <defs><pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0L0 0 0 20" fill="none" stroke="#8892a4" stroke-width=".5"/></pattern></defs>
+            <rect width="300" height="140" fill="url(#g)"/>
+            <path d="M50,70 L110,40 L180,60 L250,30" stroke="#3b82f6" stroke-width="1.5" fill="none" opacity=".4"/>
+            <path d="M30,100 L120,90 L200,110 L280,80" stroke="#3b82f6" stroke-width="1" fill="none" opacity=".3"/>
+          </svg>
+          <div class="map-ring"></div>
+          <div class="map-ring r2"></div>
+          <div class="map-dot"></div>
+          <div class="map-city">Chicago, IL</div>
+        </div>
+      </div>
+
+      <div class="rp-section">
+        <div class="rp-title">💰 Today vs Average</div>
+        <div class="earn-compare">
+          <div class="earn-box"><div class="earn-val red" id="earnings-today">—</div><div class="earn-lbl">Today</div></div>
+          <div class="earn-box"><div class="earn-val green" id="earnings-avg">—</div><div class="earn-lbl">Daily Avg</div></div>
+        </div>
+        <div class="earn-bar-track"><div class="earn-bar-fill" style="width:77%"></div></div>
+      </div>
+
+      <div class="rp-section">
+        <div class="rp-title">🛡 Protection Status</div>
+        <div class="protect-list">
+          <div class="protect-row"><div class="dot green-dot"></div><span class="muted">Ride monitoring</span><span class="protect-val green">ACTIVE</span></div>
+          <div class="protect-row"><div class="dot green-dot"></div><span class="muted">Pay tracking</span><span class="protect-val green">ACTIVE</span></div>
+          <div class="protect-row"><div class="dot green-dot"></div><span class="muted">Algorithm watch</span><span class="protect-val green">ACTIVE</span></div>
+          <div class="protect-row"><div class="dot amber-dot pulse"></div><span class="muted">Fatigue monitor</span><span class="protect-val amber">ACTIVE</span></div>
+        </div>
+      </div>
+
+      <div class="rp-section">
+        <div class="rp-title">⏱ Fatigue Monitor</div>
+        <div style="text-align:center;padding:8px 0">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="36" fill="none" stroke="var(--border)" stroke-width="6"/>
+            <circle cx="45" cy="45" r="36" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226" transform="rotate(-90 45 45)" id="fatigue-ring"/>
+            <text x="45" y="42" text-anchor="middle" fill="var(--text)" font-family="Barlow Condensed" font-size="15" font-weight="900" id="fatigue-val">0.0h</text>
+            <text x="45" y="55" text-anchor="middle" fill="var(--accent)" font-family="Barlow" font-size="8">of 6h max</text>
+          </svg>
+        </div>
+        <div style="font-size:11px;text-align:center;color:var(--accent)" id="fatigue-msg">Monitoring shift hours</div>
+      </div>
+
+      <div class="rp-section" style="border:none">
+        <div class="rp-title">🌐 Community</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8">
+          Live reports from drivers in your city. All data is anonymized.
+        </div>
+        <button class="btn btn-outline" style="width:100%;margin-top:10px;font-size:11px" onclick="showPage('community',null)">VIEW COMMUNITY REPORTS</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <button class="toast-close" onclick="hideToast()">✕</button>
+  <div class="toast-title" id="toast-title">ALERT</div>
+  <div class="toast-body" id="toast-body"></div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

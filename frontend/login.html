@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ShieldRide — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+    .auth-wrap{width:100%;max-width:420px;padding:24px;}
+    .auth-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:38px;letter-spacing:4px;color:var(--accent);text-align:center;margin-bottom:4px;}
+    .auth-sub{text-align:center;font-size:11px;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;}
+    .auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px;}
+    .auth-tabs{display:flex;margin-bottom:24px;border-bottom:1px solid var(--border);}
+    .auth-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+    .auth-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .auth-form{display:none;} .auth-form.active{display:block;}
+    .err{color:var(--accent2);font-size:12px;margin-bottom:12px;display:none;}
+    .demo-hint{margin-top:16px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;font-size:11px;color:var(--text2);text-align:center;line-height:2;}
+  </style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-logo">SHIELD<span style="color:var(--text3);font-weight:400">RIDE</span></div>
+  <div class="auth-sub">AI-Powered Driver Protection</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">LOGIN</div>
+      <div class="auth-tab" onclick="switchTab('register')">REGISTER</div>
+    </div>
+
+    <div class="auth-form active" id="f-login">
+      <div class="err" id="login-err"></div>
+      <div class="form-group"><div class="form-label">Email</div><input class="form-input" type="email" id="l-email" placeholder="marcus@shieldride.demo"/></div>
+      <div class="form-group" style="margin-bottom:20px"><div class="form-label">Password</div><input class="form-input" type="password" id="l-pass" placeholder="password123"/></div>
+      <button class="btn btn-primary" style="width:100%;padding:12px;" id="btn-login" onclick="doLogin()">LOGIN</button>
+      <div class="demo-hint">Demo: <strong style="color:var(--text)">marcus@shieldride.demo</strong> / <strong style="color:var(--text)">password123</strong></div>
+    </div>
+
+    <div class="auth-form" id="f-register">
+      <div class="err" id="reg-err"></div>
+      <div class="form-grid">
+        <div class="form-group"><div class="form-label">Full Name</div><input class="form-input" type="text" id="r-name" placeholder="Your Name"/></div>
+        <div class="form-group"><div class="form-label">City</div><input class="form-input" type="text" id="r-city" placeholder="Chicago"/></div>
+        <div class="form-group full"><div class="form-label">Email</div><input class="form-input" type="email" id="r-email" placeholder="you@email.com"/></div>
+        <div class="form-group full"><div class="form-label">Password</div><input class="form-input" type="password" id="r-pass" placeholder="min 6 characters"/></div>
+        <div class="form-group"><div class="form-label">Platform</div>
+          <select class="form-select" id="r-platform"><option value="Both">Both</option><option value="Uber">Uber</option><option value="Lyft">Lyft</option></select>
+        </div>
+        <div class="form-group"><div class="form-label">Phone (optional)</div><input class="form-input" type="tel" id="r-phone" placeholder="+1 312 555 0100"/></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:12px;margin-top:16px;" id="btn-reg" onclick="doRegister()">CREATE ACCOUNT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+function switchTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('f-login').classList.toggle('active', t==='login');
+  document.getElementById('f-register').classList.toggle('active', t==='register');
+}
+function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+function setBtn(id, loading, text) { const b=document.getElementById(id); b.disabled=loading; b.textContent=loading?'Please wait...':text; }
+
+async function doLogin() {
+  const email=document.getElementById('l-email').value, pass=document.getElementById('l-pass').value;
+  document.getElementById('login-err').style.display='none';
+  setBtn('btn-login', true);
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email,password:pass}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    localStorage.setItem('sr_token', data.token);
+    localStorage.setItem('sr_driver', JSON.stringify(data.driver));
+    window.location.href = '/';
+  } catch(err) { showErr('login-err', err.message); setBtn('btn-login', false, 'LOGIN'); }
+}
+
+async function doRegister() {
+  const name=document.getElementById('r-name').value, city=document.getElementById('r-city').value,
+        email=document.getElementById('r-email').value, pass=document.getElementById('r-pass').value,
+        platform=document.getElementById('r-platform').value, phone=document.getElementById('r-phone').value;
+  document.getElementById('reg-err').style.display='none';
+  setBtn('btn-reg', true);
+  try {
+    const res = await fetch(`${API_BASE}/auth/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name,email,password:pass,city,platform,phone}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    localStorage.setItem('sr_token', data.token);
+    localStorage.setItem('sr_driver', JSON.stringify(data.driver));
+    window.location.href = '/';
+  } catch(err) { showErr('reg-err', err.message); setBtn('btn-reg', false, 'CREATE ACCOUNT'); }
+}
+
+document.addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('f-login').classList.contains('active') ? doLogin() : doRegister(); });
+if (localStorage.getItem('sr_token')) window.location.href = '/';
+</script>
+</body>
+</html>
